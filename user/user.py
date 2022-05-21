@@ -3,7 +3,6 @@ import json
 from flask import Blueprint, request, jsonify, current_app
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
-import uuid
 from flask_jwt_extended import jwt_required
 from flask_jwt_extended import get_jwt
 import sqlite3
@@ -13,7 +12,8 @@ from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import get_jwt
 from flask_jwt_extended import set_access_cookies
 from flask_jwt_extended import unset_jwt_cookies
-from yaml import load
+from common.utils import profile as prof
+from common.getdb import con
 
 
 user = Blueprint("user", __name__)
@@ -46,12 +46,10 @@ user = Blueprint("user", __name__)
 @user.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
-    con = sqlite3.connect("./data.sqlite", check_same_thread=False)
     cur = con.cursor()
     if not data or not data["username"] or not data["password"]:
         return jsonify({"message": "could not register user"}), 400
     hased_pass = generate_password_hash(data["password"], method="sha256")
-    print(data["name"], data["username"], data["password"], hased_pass)
     try:
         cur.execute(
             "INSERT INTO user(name,username,password)values(?,?,?)",
@@ -62,14 +60,11 @@ def register():
     except:
         print("could not register user in db")
         return jsonify({"message": "could not register user"}), 400
-    finally:
-        con.close()
 
 
 @user.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
-    con = sqlite3.connect("./data.sqlite", check_same_thread=False)
     cur = con.cursor()
     if not data or not data["username"] or not data["password"]:
         return {"message": "Could not verify invalid username/password"}, 401
@@ -92,16 +87,12 @@ def login():
     except Exception as e:
         print("could not verify, exception:", e)
         return {"message": "Could not verify"}, 401
-    finally:
-        con.close()
 
 
 @user.route("/profile", methods=["GET"])
 def profile():
     try:
-        profile = open("./mock/profile.json")
-        if profile:
-            return json.load(profile), 200
+        return prof
     except Exception as e:
         print("exception:", e)
         return {"message": "Could not load profile"}, 401

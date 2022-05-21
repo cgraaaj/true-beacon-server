@@ -8,13 +8,12 @@ from flask_jwt_extended import JWTManager
 import asyncio
 import websockets
 import pandas as pd
-import requests
 import os
 import logging
 import csv
-import time
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 import csv, sqlite3
+from common.utils import place_ord
 
 # from bson import json_util
 from dotenv import load_dotenv
@@ -27,6 +26,7 @@ from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import get_jwt
 from flask_jwt_extended import set_access_cookies
 from flask_jwt_extended import unset_jwt_cookies
+from common.getdb import con
 
 app = Flask(__name__)
 
@@ -45,7 +45,6 @@ CORS(app)
 app.config["CORS_HEADERS"] = "Content-Type"
 
 
-con = sqlite3.connect("./data.sqlite", check_same_thread=False)
 cur = con.cursor()
 cur.execute("DROP TABLE IF EXISTS historical_prices;")
 cur.execute("CREATE TABLE historical_prices (date, price, instrument_name);")
@@ -63,12 +62,7 @@ cur.executemany(
     to_db,
 )
 con.commit()
-con.close()
-
-
-@app.route("/hi", methods=["GET"])
-def hi():
-    return "hi"
+# con.close()
 
 
 @app.route("/historical-data", methods=["GET"])
@@ -80,7 +74,6 @@ def get_historical_data():
     select_query = "SELECT * FROM historical_prices WHERE date between '{}' and '{}' and instrument_name='{}'".format(
         from_date, to_date, symbol
     )
-    con = sqlite3.connect("./data.sqlite", check_same_thread=False)
     df = pd.read_sql(select_query, con)
     return df.to_json(orient="records")
 
