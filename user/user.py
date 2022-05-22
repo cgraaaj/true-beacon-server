@@ -71,7 +71,6 @@ def login():
     try:
         cur.execute("SELECT * FROM user WHERE username = ?", [data["username"]])
         user = cur.fetchone()
-        print(user)
         if not user:
             return {"message": "User not Found"}, 404
         if check_password_hash(user[3], data["password"]):
@@ -88,6 +87,11 @@ def login():
         print("could not verify, exception:", e)
         return {"message": "Could not verify"}, 401
 
+@user.route("/logout", methods=["POST"])
+def logout():
+    response = jsonify({"msg": "logout successful"})
+    unset_jwt_cookies(response)
+    return response
 
 @user.route("/profile", methods=["GET"])
 def profile():

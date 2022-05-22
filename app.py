@@ -78,13 +78,6 @@ def get_historical_data():
     return df.to_json(orient="records")
 
 
-@app.route("/logout", methods=["POST"])
-def logout():
-    response = jsonify({"msg": "logout successful"})
-    unset_jwt_cookies(response)
-    return response
-
-
 if __name__ == "__main__":
 
     LOCATE_PY_DIRECTORY_PATH = os.path.abspath(os.path.dirname(__file__))
